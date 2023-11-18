@@ -1,9 +1,9 @@
 const express = require('express');
-const PC = require('./pc');
 const User = require('./user')
 const fs = require("fs");
 const { parse } = require("csv-parse");
 const Queue = require("./pcQ")
+const MongoDriver = require('./mongoDriver');
 
 
 const app = express();
@@ -12,10 +12,10 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static('public'));
 
-const port = 3000;
 
-let pcList = []
+const port = 3000;
 const pcQueue = new Queue();
+const mongo = new MongoDriver("mongodb+srv://testUser:123@cluster0.vumv6ea.mongodb.net/?retryWrites=true&w=majority");
 
 app.get('/', (req, res) => {
   res.send('Welcome to my server!');
@@ -25,20 +25,16 @@ app.get('/swipe', (req, res) => {
     res.render('swipe');
 });
 
-app.post('/auth', function(req, res) {
-	// Capture the input fields
+app.post('/auth', async function(req, res) {
 	let name = req.body.name;
 	let pid = req.body.pid;
-    console.log(name,pid)
-	// Ensure the input fields exists and are not empty
 	if (name && pid) {
-        const newUser = new User(name,pid, Date.now())
-        availPC = getAvailablePC();
+        const newUser = new User(name, pid, Date.now())
+        availPC = await getAvailablePC();
         console.log(availPC)
         if(availPC != null){ //there is available pc
-            assignUserToPc(newUser, availPC)
-            let pcName = availPC.getName();
-            res.render('gotopc', {pcName});
+            await assignUserToPc(newUser, availPC)
+            res.render('gotopc', {availPC});
             
         } else {  //no available pc
             pcQueue.enqueue(newUser);
@@ -52,41 +48,40 @@ app.post('/auth', function(req, res) {
 	}
 });
 
-function assignUserToPc(user, pc){
-    pc.setUser(user);
-    user.startSession();
+async function assignUserToPc(user, pc){
+    pcQuery = {name: pc}
+    userQuery = {pid: user.pid}
+    pcUpdate = {currUser: user}
+    userUpdate = {name: user.name, pid: user.pid, currSession: user.currSession}
+    await mongo.update('pcList', pcQuery, pcUpdate)
+    await mongo.update('userList', userQuery, userUpdate)
+}
+
+function isAvailable(pc){
+    if(pc.currUser == null && pc.status == 'GOOD'){
+        return true;
+    }
+    return false;
 }
 
 //return available pc or null if no pc available
-function getAvailablePC(){
+async function getAvailablePC(){
+    //check mongo
+    pcList = await mongo.read("pcList")
     for(let i = 0; i < pcList.length; i++){
-        if(pcList[i].isAvailable()){
-            return pcList[i];
+        if(isAvailable(pcList[i])){
+            return pcList[i].name;
         }
     }
     return null;
 }
 
-function readPCs(){
-    fs.createReadStream("./pcData.csv")
-    .pipe(parse({ delimiter: ",", from_line: 2 }))
-    .on("data", function (row) {
-        currUser = null;
-        if(row[1] != 'null'){
-            currUser = row[1]
-        }
-        const newPC = new PC(row[0], currUser, row[2])
-        pcList.push(newPC)
-    })
-    .on("end", function () {
-      //  console.log("finished");
-    })
-    .on("error", function (error) {
-        console.log(error.message);
-    });
-}
-
 app.listen(port, () => {
-    readPCs()
+    startMongo();
     console.log(`Server is running on port ${port}`);
 }); 
+
+async function startMongo(){
+    await mongo.connect();
+    // console.log(pcList)
+}
