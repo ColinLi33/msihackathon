@@ -4,15 +4,31 @@ const User = require('./user')
 const fs = require("fs");
 const { parse } = require("csv-parse");
 
+
 const app = express();
+app.use(express.static('public'));
+
 const port = 3000;
+
+
 
 app.get('/', (req, res) => {
   res.send('Welcome to my server!');
 });
 
-app.get('/signin', (req, res) => {
-    res.send('Welcome to my server!');
+app.get('/swipe', (req, res) => {
+    res.sendFile(__dirname + '/public/swipe.html');
+});
+
+app.post('/auth', function(request, response) {
+	let name = request.body.name;
+	let pid = request.body.pid;
+	// Ensure the input fields exists and are not empty
+	if (name && pid) {
+	} else {
+		response.send('Please enter Username and Password!');
+		response.end();
+	}
 });
 
 function readPCs(){
