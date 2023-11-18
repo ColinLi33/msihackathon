@@ -1,0 +1,24 @@
+<!-- views/index.ejs -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="textPage.css" rel="stylesheet" type="text/css">
+    <title>TEC Controller</title>
+</head>
+<body>
+    <div class="container">
+        <p>No PC's Available :( </p>
+        <p>You are number <span id="spotInLine"><%= spotInLine %></span> in line</p>
+
+        <button onclick="goToHomepage()">Ok</button>
+    </div>
+
+    <script>
+        function goToHomepage() {
+            window.location.href = '/';
+        }
+    </script>
+</body>
+</html>

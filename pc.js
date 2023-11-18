@@ -8,6 +8,21 @@ class PC{
         this.currUser = currUser;
         this.status = status;
     }
+
+    isAvailable(){
+        if(this.currUser == null && this.status == "GOOD"){
+            return true;
+        }
+        return false;
+    }
+
+    setUser(user){
+        this.currUser = user;
+    }
+
+    getName(){
+        return this.name;
+    }
 }
 
 module.exports = PC;
