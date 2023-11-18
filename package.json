@@ -1,0 +1,11 @@
+{
+  "name": "hackathon",
+  "version": "1.0.0",
+  "description": "msi hackathon project",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "colin li, jerry gong, owin gong",
+  "license": "ISC"
+}
