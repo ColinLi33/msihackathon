@@ -57,6 +57,7 @@ function assignUserToPc(user, pc){
     user.startSession();
 }
 
+
 //return available pc or null if no pc available
 function getAvailablePC(){
     for(let i = 0; i < pcList.length; i++){
@@ -66,6 +67,21 @@ function getAvailablePC(){
     }
     return null;
 }
+
+function getLongestSession(){
+    maxTime = -1;
+    longest = null;
+    currTime = Date.now();
+    for(let i = 0; i < pcList.length; i++){
+        timeDiff = currTime - pcList[i].currUser.currSession;
+        if(timeDiff >= maxTime){
+            maxTime = timeDiff;
+            longest = pcList[i];
+        }
+    }
+    return longest;
+}
+
 
 function readPCs(){
     fs.createReadStream("./pcData.csv")
