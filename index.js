@@ -4,7 +4,8 @@ const fs = require("fs");
 const { parse } = require("csv-parse");
 const Queue = require("./pcQ")
 const MongoDriver = require('./mongoDriver');
-
+const script = require('./script.js');
+ 
 
 const app = express();
 app.set('view engine', 'ejs');
@@ -18,9 +19,8 @@ const pcQueue = new Queue();
 const mongo = new MongoDriver("mongodb+srv://testUser:123@cluster0.vumv6ea.mongodb.net/?retryWrites=true&w=majority");
 
 app.get('/', (req, res) => {
-  res.send('Welcome to my server!');
+  res.render('index');
 });
-
 app.get('/swipe', (req, res) => {
     res.render('swipe');
 });
@@ -53,6 +53,7 @@ async function assignUserToPc(user, pc){
     userQuery = {pid: user.pid}
     pcUpdate = {currUser: user}
     userUpdate = {name: user.name, pid: user.pid, currSession: user.currSession}
+    script.changeStatus(pc, "used");
     await mongo.update('pcList', pcQuery, pcUpdate)
     await mongo.update('userList', userQuery, userUpdate)
 }
@@ -83,5 +84,6 @@ app.listen(port, () => {
 
 async function startMongo(){
     await mongo.connect();
+    /* initialize colors here*/
     // console.log(pcList)
 }
