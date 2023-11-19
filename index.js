@@ -28,6 +28,10 @@ app.get('/admin', (req, res) => {
     res.render('adminLogin');
 });
 
+app.get('/setup', (req, res) => {
+    res.render('setup');
+});
+
 app.get('/login', (req, res) =>{
     if (req.query.username === "UCSDEsports" && req.query.password === "tec123"){
         res.render('admin');
