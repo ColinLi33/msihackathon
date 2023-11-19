@@ -96,6 +96,12 @@ async function getAvailablePC(){
     return null;
 }
 
+async function getSinglePcInfo(pcName) {
+    const pcQuery = { name: pcName };
+    const pcInfo = await mongo.read('pcList', pcQuery);
+    return pcInfo;
+}
+
 
 http.listen(port, () => {
     startMongo();
@@ -106,15 +112,19 @@ io.on('connection', (socket) => {
     if(mongoStarted){
         sendUpdate();
     }
-    console.log('A user connected');
     socket.on('disconnect', () => {
-        console.log('User disconnected');
+    });
+
+    socket.on('getPcInfo', async (data) => {
+        if(mongoStarted){
+            const pcName = data.pcName;
+            const pcInfo = await getSinglePcInfo(pcName);
+            socket.emit('pcInfo', pcInfo);
+        }
     });
 });
 
 async function startMongo(){
     await mongo.connect();
     mongoStarted = true;
-    /* initialize colors here*/
-    // console.log(pcList)
 }

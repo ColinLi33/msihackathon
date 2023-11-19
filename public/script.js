@@ -24,7 +24,6 @@ function addPC(rowNum, name, leftOrRight, currentStatus){
 }
 
 function changeStatus(pcName, newStatus){
-    console.log(pcName, newStatus)
     let PCs = document.getElementsByClassName("PC");
     for (let i = 0; i < PCs.length; i++){
         if(PCs[i].innerText === pcName){
