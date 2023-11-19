@@ -112,6 +112,18 @@ async function endSession(pc){
     sendUpdate();
 }
 
+async function disablePC(pc){
+    pc = pc[0];
+}
+
+async function enablePC(pc){
+    pc = pc[0];
+    pcQuery = {name: pc.name};
+    pcUpdate = {currUser: null, status: "Available"};
+    await mongo.update('pcList', pcQuery, pcUpdate);
+    sendUpdate();
+}
+
 async function sendUpdate(){
     pcList = await mongo.read("pcList")
     io.emit('pcStatusUpdate', {pcList: pcList});
@@ -175,6 +187,20 @@ io.on('connection', (socket) => {
             endSession(pcInfo);
         }
     });
+
+    socket.on('enable', async (data)=>{
+        if(mongoStarted){
+            const pcInfo = await getSinglePcInfo(data.pcName);
+            enablePC(pcInfo);
+        }
+    });
+
+    socket.on('disable', async (data)=>{
+        if(mongoStarted){
+            const pcInfo = await getSinglePcInfo(data.pcName);
+            disablePC(pcInfo);
+        }
+    })
 });
 
 async function startMongo(){
