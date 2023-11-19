@@ -100,7 +100,7 @@
         </select>
         <button class="disable">Disable</button>
         <button class="enable">Enable</button>
-      </div>
+      </div>    
 </div>
 <div class="Cafe">Cafe</div>
 </div>
@@ -117,17 +117,17 @@
     const enable = document.getElementsByClassName("enable")[0];
     disable.addEventListener("click", ()=>{
         let element = document.getElementById('ModifyPC');
-        element.value = 'Enable/Disable PC'
-        element.value.innerHTML = 'hidden'
         const pcName = document.getElementById("ModifyPC").value;
         socket.emit('disable', {pcName});
+        element.value = 'Enable/Disable PC'
+        element.value.innerHTML = 'hidden'
     });
     enable.addEventListener("click", ()=>{
         let element = document.getElementById('ModifyPC');
-        element.value = 'Enable/Disable PC'
-        element.value.innerHTML = 'hidden'
         const pcName = document.getElementById("ModifyPC").value;
         socket.emit('enable', {pcName});
+        element.value = 'Enable/Disable PC'
+        element.value.innerHTML = 'hidden'
     });
 
     const removeFromQueue = document.getElementsByClassName("removeFromQueue")[0];
