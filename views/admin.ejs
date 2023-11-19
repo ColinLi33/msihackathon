@@ -57,38 +57,50 @@
             <div class="PC available pc-item" data-pc-name="E4">E4</div>
         </div>
     </div>
-    <label>Disable/Enable PCs</label>
-    <select name="ModifyPC" id="ModifyPC">
-        <option value="D1">D1</option>
-        <option value="D2">D2</option>
-        <option value="D3">D3</option>
-        <option value="D4">D4</option>
-        <option value="D5">D5</option>
-        <option value="D6">D6</option>
-        <option value="C1">C1</option>
-        <option value="C2">C2</option>
-        <option value="C3">C3</option>
-        <option value="C4">C4</option>
-        <option value="C5">C5</option>
-        <option value="C6">C6</option>
-        <option value="B1">B1</option>
-        <option value="B2">B2</option>
-        <option value="B3">B3</option>
-        <option value="B4">B4</option>
-        <option value="B5">B5</option>
-        <option value="A1">A1</option>
-        <option value="A2">A2</option>
-        <option value="A3">A3</option>
-        <option value="A4">A4</option>
-        <option value="A5">A5</option>
-        <option value="A6">A6</option>
-        <option value="E1">E1</option>
-        <option value="E2">E2</option>
-        <option value="E3">E3</option>
-        <option value="E4">E4</option>
-      </select>
-      <button class="disable">Disable</button>
-      <button class="enable">Enable</button>
+    <div class="box">
+        <!-- <label>People in Queue</label> -->
+        <select id="QueueMembers">
+            <option selected disabled>People in Queue</option>
+        </select>
+        <!-- <button class="disable">Assign PC</button> -->
+        <button class="removeFromQueue">Remove</button>
+
+    </div>
+    <div class="box">
+        <!-- <label>Disable/Enable PCs</label> -->
+        <select name="ModifyPC" id="ModifyPC">
+            <option hidden>Enable/Disable PC</option>
+            <option value="A1">A1</option>
+            <option value="A2">A2</option>
+            <option value="A3">A3</option>
+            <option value="A4">A4</option>
+            <option value="A5">A5</option>
+            <option value="A6">A6</option>
+            <option value="B1">B1</option>
+            <option value="B2">B2</option>
+            <option value="B3">B3</option>
+            <option value="B4">B4</option>
+            <option value="B5">B5</option>
+            <option value="C1">C1</option>
+            <option value="C2">C2</option>
+            <option value="C3">C3</option>
+            <option value="C4">C4</option>
+            <option value="C5">C5</option>
+            <option value="C6">C6</option>
+            <option value="D1">D1</option>
+            <option value="D2">D2</option>
+            <option value="D3">D3</option>
+            <option value="D4">D4</option>
+            <option value="D5">D5</option>
+            <option value="D6">D6</option>
+            <option value="E1">E1</option>
+            <option value="E2">E2</option>
+            <option value="E3">E3</option>
+            <option value="E4">E4</option>
+        </select>
+        <button class="disable">Disable</button>
+        <button class="enable">Enable</button>
+      </div>
 </div>
 <div class="Cafe">Cafe</div>
 </div>
@@ -104,19 +116,32 @@
     const disable = document.getElementsByClassName("disable")[0];
     const enable = document.getElementsByClassName("enable")[0];
     disable.addEventListener("click", ()=>{
+        let element = document.getElementById('ModifyPC');
+        element.value = 'Enable/Disable PC'
+        element.value.innerHTML = 'hidden'
         const pcName = document.getElementById("ModifyPC").value;
         socket.emit('disable', {pcName});
     });
     enable.addEventListener("click", ()=>{
+        let element = document.getElementById('ModifyPC');
+        element.value = 'Enable/Disable PC'
+        element.value.innerHTML = 'hidden'
         const pcName = document.getElementById("ModifyPC").value;
         socket.emit('enable', {pcName});
     });
 
-    socket.on('queueUpdate', (data) =>{
+    const removeFromQueue = document.getElementsByClassName("removeFromQueue")[0];
+    removeFromQueue.addEventListener("click", ()=>{
+        let element = document.getElementById('QueueMembers');
+        const user = document.getElementById("QueueMembers").value;
+        socket.emit('removeFromQueue', {user})
+        element.value = 'People in Queue'
+    });
+
+    socket.on('queueFillPC', (data) =>{
         data = data.queueInfo
         pcFilled = false;
         counter = 0;
-        console.log(!pcFilled && counter < data.length)
         while(!pcFilled && counter < data.length){
             nextInLine = data[counter];
             let text = `A PC is available for: ${nextInLine.name}, please let them know. Click cancel if they are not here.`;
@@ -128,8 +153,22 @@
                 socket.emit('queueDeclined', {nextInLine})
             }
         }
-
     });
+
+    socket.on('queueUpdated', (data) =>{
+        const queueMembersDropdown = document.getElementById('QueueMembers');
+        queueMembersDropdown.innerHTML = ''
+        data = data.queueList;
+        const option = document.createElement('option');
+        option.text = "People in Queue"
+        queueMembersDropdown.appendChild(option);
+        for (let i = 0; i < data.length; i++) {
+            const option = document.createElement('option');
+            option.text = `${data[i].name}: ${((Date.now() - data[i].currSession) / 60000).toFixed(0)} minutes`
+            option.value = data[i].pid
+            queueMembersDropdown.appendChild(option);
+        }
+    })
 
     const pcItems = document.querySelectorAll('.pc-item');
     pcItems.forEach((pcItem) => {

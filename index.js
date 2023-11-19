@@ -94,6 +94,7 @@ app.post('/auth', async function(req, res) {
                 await mongo.write('userQueue', user)
                 spotInLine = user.index
                 res.render('queue', {spotInLine})
+                sendQueueUpdate()
                 return;
             } else { //user already in queue
                 spotInLine = qInfo[0].index
@@ -125,7 +126,7 @@ async function assignUserToPc(user, pc){
 async function checkQueue(){
     queueInfo = await mongo.read('userQueue')
     if(queueInfo.length > 0){
-        io.emit('queueUpdate', {queueInfo: queueInfo})
+        io.emit('queueFillPC', {queueInfo: queueInfo})
     }
 }
 
@@ -172,12 +173,15 @@ async function enablePC(pc){
     sendUpdate();
 }
 
-=======
 //update the PC's on the frontend
-
 async function sendUpdate(){
     pcList = await mongo.read("pcList")
     io.emit('pcStatusUpdate', {pcList: pcList});
+}
+
+async function sendQueueUpdate(){
+    queueList = await mongo.read("userQueue")
+    io.emit('queueUpdated', {queueList: queueList})
 }
 
 //return true if pc is open
@@ -224,6 +228,7 @@ http.listen(port, () => {
 io.on('connection', (socket) => {
     if(mongoStarted){
         sendUpdate();
+        sendQueueUpdate();
     }
     socket.on('disconnect', () => {
     });
@@ -256,14 +261,7 @@ io.on('connection', (socket) => {
             disablePC(pcInfo);
         }
     });
-    
-    socket.on('getQueueSize', ()=>{
-        if(mongoStarted){
-            let size = await
-            socket.emit("updateQueue", {})
-        }
-    })
-
+        
     socket.on('queueAccepted', async(data) => {
         if(mongoStarted){
             data = data.nextInLine
@@ -271,6 +269,7 @@ io.on('connection', (socket) => {
             await assignUserToPc(data, freePc);
             const userQuery = { pid: data.pid };
             await mongo.delete('userQueue', userQuery);
+            sendQueueUpdate()
         }
     });
 
@@ -282,7 +281,17 @@ io.on('connection', (socket) => {
             queueData = await mongo.read('userQueue', userQuery);
             if((Date.now() - queueData[0].currSession) / 60000 > minQueueBeforeKick){ //remove from queue if in for 45 min and decline
                 await mongo.delete('userQueue', userQuery);
+                sendQueueUpdate()
             }
+        }
+    });
+
+    socket.on('removeFromQueue', async(data) => {
+        if(mongoStarted){
+            data = data.user
+            const userQuery = { pid: data };
+            await mongo.delete('userQueue', userQuery);
+            sendQueueUpdate()
         }
     });
 });
