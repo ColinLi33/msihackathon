@@ -200,6 +200,18 @@ async function sendQueueUpdate(){
     io.emit('queueUpdated', {queueList: queueList})
 }
 
+async function sendSessionUpdate(){
+    sessionList = await mongo.read("userList");
+    let result = [];
+    for (let i = 0; i < sessionList.length; i++){
+        if (sessionList[i].currSession != -1){
+            let sessionTime = ((Date.now() - sessionList[i].currSession) / 60000).toFixed(0);
+            let session = {name: sessionList[i].name, time : sessionTime};
+            result.push(session);
+        }
+    }
+    return result;
+}
 
 //return true if pc is open
 function isAvailable(pc){
@@ -332,6 +344,12 @@ io.on('connection', (socket) => {
             socket.emit('changePage', `/gotopc/${data.pcName}`);
         }
     });
+    socket.on('getCurrSession', async(data) =>{
+        if(mongoStarted){
+            let result = await sendSessionUpdate();
+            socket.emit('currentSessions', {result});
+        }
+    })
 });
 
 //connect to mongo
