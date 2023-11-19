@@ -49,7 +49,10 @@ app.post('/auth', async function(req, res) {
 	let pid = req.body.pid;
 	if (name && pid) {
         user = await getSingleUserInfo(pid)
-        console.log(user)
+        if(user.length !=0 && user.currSession!=-1){
+            res.send('You already have a PC');
+            res.end();
+        }
         if(user.length == 0){
             user = {
                 name: name,
@@ -58,8 +61,6 @@ app.post('/auth', async function(req, res) {
                 totalHours: 0
             }
             await mongo.write('userList', user)
-        } else {
-            user = user[0]
         }
         availPC = await getAvailablePC();
         if(availPC != null){ //there is available pc
@@ -86,6 +87,7 @@ async function assignUserToPc(user, pc){
     await mongo.update('pcList', pcQuery, pcUpdate)
     await mongo.update('userList', userQuery, userUpdate)
     sendUpdate();
+
 }
 
 async function endSession(pc){
