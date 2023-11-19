@@ -28,8 +28,17 @@ app.get('/swipe', (req, res) => {
 });
 
 app.get('/admin', (req, res) => {
-    res.render('admin');
+    res.render('adminLogin');
 });
+
+app.get('/login', (req, res) =>{
+    if (req.query.username === "UCSDEsports" && req.query.password === "tec123"){
+        res.render('admin');
+    }else{
+        res.render('adminLogin');
+    }
+});
+
 
 //test function that resets all PC to empty
 app.get('/test', async (req, res) => {
