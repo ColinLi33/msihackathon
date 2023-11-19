@@ -77,5 +77,10 @@ class MongoDriver {
             throw error;
         }
     }
+
+    async getSize(collectionName){
+        const size = this.db.collection(collectionName).count();
+        return size;
+    }
 }
 module.exports = MongoDriver;

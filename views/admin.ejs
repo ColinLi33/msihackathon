@@ -70,6 +70,24 @@
         }
     });
 
+    socket.on('queueUpdate', (data) =>{
+        data = data.queueInfo
+        pcFilled = false;
+        counter = 0;
+        console.log(!pcFilled && counter < data.length)
+        while(!pcFilled && counter < data.length){
+            nextInLine = data[counter];
+            let text = `A PC is available for: ${nextInLine.name}, please let them know. Click cancel if they are not here.`;
+            if (confirm(text) == true) {
+                pcFilled = true;
+                socket.emit('queueAccepted', {nextInLine})
+            } else {
+                counter++;
+            }
+        }
+
+    });
+
     const pcItems = document.querySelectorAll('.pc-item');
     pcItems.forEach((pcItem) => {
         pcItem.addEventListener('mouseenter', () => {

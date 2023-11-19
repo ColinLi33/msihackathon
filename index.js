@@ -1,8 +1,6 @@
 const express = require('express');
-const User = require('./user')
 const fs = require("fs");
 const { parse } = require("csv-parse");
-const Queue = require("./pcQ")
 const MongoDriver = require('./mongoDriver');
 const app = express();
 const http = require('http').createServer(app);
@@ -17,7 +15,6 @@ app.use(express.static('public'));
 
 
 const port = 3000;
-const pcQueue = new Queue();
 const mongo = new MongoDriver("mongodb+srv://testUser:123@cluster0.vumv6ea.mongodb.net/?retryWrites=true&w=majority");
 let mongoStarted = false
 app.get('/', (req, res) => {
@@ -43,13 +40,12 @@ app.get('/test', async (req, res) => {
         sendUpdate();
     }
 });
-
+//TODO: make it so if you already using PC it wont give you another one
 app.post('/auth', async function(req, res) {
 	let name = req.body.name;
 	let pid = req.body.pid;
 	if (name && pid) {
         user = await getSingleUserInfo(pid)
-        console.log(user)
         if(user.length == 0){
             user = {
                 name: name,
@@ -66,9 +62,17 @@ app.post('/auth', async function(req, res) {
             await assignUserToPc(user, availPC)
             res.render('gotopc', {availPC});
         } else {  //no available pc
-            pcQueue.enqueue(user);
-            spotInLine = pcQueue.size();
-            res.render('queue', {spotInLine})
+            const qQuery = { pid: user.pid };
+            const qInfo = await mongo.read('userQueue', qQuery);
+            if(qInfo.length == 0){ //add user to queue
+                user['index'] = await mongo.getSize('userQueue') + 1
+                await mongo.write('userQueue', user)
+                spotInLine = user.index
+                res.render('queue', {spotInLine})
+            } else { //user already in queue
+                spotInLine = qInfo[0].index
+                res.render('alreadyQueued', {spotInLine})
+            }
         }
         
 	} else {
@@ -88,6 +92,13 @@ async function assignUserToPc(user, pc){
     sendUpdate();
 }
 
+async function checkQueue(){
+    queueInfo = await mongo.read('userQueue')
+    if(queueInfo.length > 0){
+        io.emit('queueUpdate', {queueInfo: queueInfo})
+    }
+}
+
 async function endSession(pc){
     pc = pc[0];
     pcQuery = {name: pc.name}
@@ -99,6 +110,7 @@ async function endSession(pc){
     await mongo.update('pcList', pcQuery, pcUpdate)
     await mongo.update('userList', userQuery, userUpdate)
     sendUpdate();
+    checkQueue();
 }
 
 async function sendUpdate(){
@@ -162,6 +174,16 @@ io.on('connection', (socket) => {
         if(mongoStarted){
             const pcInfo = await getSinglePcInfo(data.pcName);
             endSession(pcInfo);
+        }
+    });
+
+    socket.on('queueAccepted', async(data) => {
+        if(mongoStarted){
+            data = data.nextInLine
+            freePc = await getAvailablePC();
+            await assignUserToPc(data, freePc);
+            const userQuery = { pid: data.pid };
+            await mongo.delete('userQueue', userQuery);
         }
     });
 });
