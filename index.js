@@ -27,6 +27,10 @@ app.get('/swipe', (req, res) => {
     res.render('swipe');
 });
 
+app.get('/admin', (req, res) => {
+    res.render('admin');
+});
+
 //test function that resets all PC to empty
 app.get('/test', async (req, res) => {
     if(mongoStarted){
@@ -46,7 +50,6 @@ app.post('/auth', async function(req, res) {
 	if (name && pid) {
         const newUser = new User(name, pid, Date.now())
         availPC = await getAvailablePC();
-        console.log(availPC)
         if(availPC != null){ //there is available pc
             await assignUserToPc(newUser, availPC)
             res.render('gotopc', {availPC});
@@ -70,6 +73,21 @@ async function assignUserToPc(user, pc){
     userUpdate = {name: user.name, pid: user.pid, currSession: user.currSession}
 
     // script.changeStatus(pc, "used");
+    await mongo.update('pcList', pcQuery, pcUpdate)
+    await mongo.update('userList', userQuery, userUpdate)
+    sendUpdate();
+}
+
+async function endSession(pc){
+    pc = pc[0];
+    pcQuery = {name: pc.name}
+    pcUpdate = {currUser: null, status: "Available"}
+    // console.log(pcInfo);
+    user = pc.currUser;
+    //console.log(pc);
+    userQuery = {pid: user.pid}
+    newTotalHours = (user.totalHours + Date.now() - (user.currSession / 3600000)).toFixed(2)
+    userUpdate = {currSession: -1, totalHours: newTotalHours}
     await mongo.update('pcList', pcQuery, pcUpdate)
     await mongo.update('userList', userQuery, userUpdate)
     sendUpdate();
@@ -123,6 +141,14 @@ io.on('connection', (socket) => {
             const pcName = data.pcName;
             const pcInfo = await getSinglePcInfo(pcName);
             socket.emit('pcInfo', pcInfo);
+        }
+    });
+
+    socket.on('signOff', async (data) => {
+        if(mongoStarted){
+            //console.log("hey");
+            const pcInfo = await getSinglePcInfo(data.pcName);
+            endSession(pcInfo);
         }
     });
 });
