@@ -184,9 +184,12 @@ async function disablePC(pc){
 async function enablePC(pc){
     pc = pc[0];
     pcQuery = {name: pc.name};
-    pcUpdate = {currUser: null, status: "Available"};
-    await mongo.update('pcList', pcQuery, pcUpdate);
-    sendUpdate();
+    let pcInfo = await getSinglePcInfo(pc.name);
+    if (pcInfo[0].status == "OutOfOrder"){
+        pcUpdate = {currUser: null, status: "Available"};
+        await mongo.update('pcList', pcQuery, pcUpdate);
+        sendUpdate();
+    }
 }
 
 //update the PC's on the frontend
@@ -201,12 +204,12 @@ async function sendQueueUpdate(){
 }
 
 async function sendSessionUpdate(){
-    sessionList = await mongo.read("userList");
+    sessionList = await mongo.read("pcList");
     let result = [];
     for (let i = 0; i < sessionList.length; i++){
-        if (sessionList[i].currSession != -1){
-            let sessionTime = ((Date.now() - sessionList[i].currSession) / 60000).toFixed(0);
-            let session = {name: sessionList[i].name, time : sessionTime};
+        if (sessionList[i].currUser != null ){
+            let sessionTime = ((Date.now() - sessionList[i].currUser.currSession) / 60000).toFixed(0);
+            let session = {userData: sessionList[i].currUser, time : sessionTime, pcName: sessionList[i].name};
             result.push(session);
         }
     }
