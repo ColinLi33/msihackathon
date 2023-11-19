@@ -6,32 +6,36 @@ const app = express();
 const http = require('http').createServer(app);
 const io = require('socket.io')(http);
 
-
-
 app.set('view engine', 'ejs');
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static('public'));
 
-
 const port = 3000;
 const mongo = new MongoDriver("mongodb+srv://testUser:123@cluster0.vumv6ea.mongodb.net/?retryWrites=true&w=majority");
 let mongoStarted = false
+
+//home page
 app.get('/', (req, res) => {
   res.render('index');
 });
+
+//card swipe page
 app.get('/swipe', (req, res) => {
     res.render('swipe');
 });
 
+//admin page
 app.get('/admin', (req, res) => {
     res.render('adminLogin');
 });
 
+//setup page
 app.get('/setup', (req, res) => {
     res.render('setup');
 });
 
+//admin login page
 app.get('/login', (req, res) =>{
     if (req.query.username === "UCSDEsports" && req.query.password === "tec123"){
         res.render('admin');
@@ -51,13 +55,15 @@ app.get('/test', async (req, res) => {
         sendUpdate();
     }
 });
-//TODO: make it so if you already using PC it wont give you another one
+
+//function that happens after swipe, does logic to see if queue needed or can directly go to pc
 app.post('/auth', async function(req, res) {
 	let name = req.body.name;
 	let pid = req.body.pid;
 	if (name && pid) {
+        //get user data from swipe
         user = await getSingleUserInfo(pid)
-        if(user.length == 0){
+        if(user.length == 0){ //make new user if not in DB
             user = {
                 name: name,
                 pid: pid,
@@ -94,26 +100,27 @@ app.post('/auth', async function(req, res) {
                 return;
             }
         }
-        
 	} else {
 		res.send('Please enter Name and PID!');
 		res.end();
 	}
 });
 
+//add user to PC
 async function assignUserToPc(user, pc){
     user.currSession = Date.now()
     pcQuery = {name: pc}
     userQuery = {pid: user.pid}
     pcUpdate = {currUser: user, status: "Used"}
     userUpdate = {name: user.name, pid: user.pid, currSession: Date.now(), totalHours: user.totalHours}
-    await mongo.update('pcList', pcQuery, pcUpdate)
-    await mongo.update('userList', userQuery, userUpdate)
+    await mongo.update('pcList', pcQuery, pcUpdate) //update pc DB
+    await mongo.update('userList', userQuery, userUpdate) //update user DB
     sendUpdate();
 
 }
 
 //TODO ask chris what to do if someone declines queue
+//if there are people in queue
 async function checkQueue(){
     queueInfo = await mongo.read('userQueue')
     if(queueInfo.length > 0){
@@ -121,6 +128,7 @@ async function checkQueue(){
     }
 }
 
+//remove someone from PC
 async function endSession(pc){
     if(pc.length == 1){
         pc = pc[0];
@@ -139,11 +147,13 @@ async function endSession(pc){
     }
 }
 
+//update the PC's on the frontend
 async function sendUpdate(){
     pcList = await mongo.read("pcList")
     io.emit('pcStatusUpdate', {pcList: pcList});
 }
 
+//return true if pc is open
 function isAvailable(pc){
     if(pc.currUser == null && pc.status == 'Available'){
         return true;
@@ -163,24 +173,27 @@ async function getAvailablePC(){
     return null;
 }
 
+//get all info for single PC in DB
 async function getSinglePcInfo(pcName) {
     const pcQuery = { name: pcName };
     const pcInfo = await mongo.read('pcList', pcQuery);
     return pcInfo;
 }
 
+//get all info for single user in DB
 async function getSingleUserInfo(pid) {
     const userQuery = { pid: pid };
     const userInfo = await mongo.read('userList', userQuery);
     return userInfo;
 }
 
-
+//start server
 http.listen(port, () => {
     startMongo();
     console.log(`Server is running on port ${port}`);
 }); 
 
+//socket logic
 io.on('connection', (socket) => {
     if(mongoStarted){
         sendUpdate();
@@ -214,6 +227,7 @@ io.on('connection', (socket) => {
     });
 });
 
+//connect to mongo
 async function startMongo(){
     await mongo.connect();
     mongoStarted = true;
