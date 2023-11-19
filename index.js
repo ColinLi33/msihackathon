@@ -168,7 +168,3 @@ async function startMongo(){
     await mongo.connect();
     mongoStarted = true;
 }
-
-
-
-
