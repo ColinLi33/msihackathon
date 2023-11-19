@@ -49,6 +49,10 @@ app.post('/auth', async function(req, res) {
 	let pid = req.body.pid;
 	if (name && pid) {
         user = await getSingleUserInfo(pid)
+        if(user.length !=0 && user.currSession!=-1){
+            res.send('You already have a PC');
+            res.end();
+        }
         if(user.length == 0){
             user = {
                 name: name,
