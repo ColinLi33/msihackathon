@@ -47,6 +47,10 @@
 .add{
     text-align:center;
 }
+.QueueSize{
+    text-align: center;
+    display: inline-block;
+}
 .Row{
     display: flex;
     justify-content: space-between;

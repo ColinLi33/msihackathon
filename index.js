@@ -184,6 +184,7 @@ async function sendQueueUpdate(){
     io.emit('queueUpdated', {queueList: queueList})
 }
 
+
 //return true if pc is open
 function isAvailable(pc){
     if(pc.currUser == null && pc.status == 'Available'){
@@ -261,7 +262,7 @@ io.on('connection', (socket) => {
             disablePC(pcInfo);
         }
     });
-        
+
     socket.on('queueAccepted', async(data) => {
         if(mongoStarted){
             data = data.nextInLine
