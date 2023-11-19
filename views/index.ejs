@@ -4,6 +4,7 @@
         <link href="style.css" rel="stylesheet" type="text/css">
     </head>
 <div class="body">
+<div class="QueueSize">Current queue size: </div>
 <div class="Garage">Garage</div>
 <div id="Seats">
     <div class="Row">
@@ -67,6 +68,11 @@
         for(let i = 0; i < data.pcList.length; i++){
             changeStatus(data.pcList[i].name, data.pcList[i].status)
         }
+    });
+    const queueSize = document.getElementsByClassName("queueSize")[0];
+    socket.emit("getQueueSize", {});
+    socket.on('updateQueue', (data)=>{
+        queueSize.innerText = `Current queue size: ${data}`; 
     });
  
     

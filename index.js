@@ -148,7 +148,33 @@ async function endSession(pc){
     }
 }
 
+
+async function disablePC(pc){
+    pc = pc[0];
+    pcQuery = {name: pc.name};
+    pcUpdate = {currUser: null, status: "OutOfOrder"};
+    await mongo.update('pcList', pcQuery, pcUpdate);
+    user = pc.currUser;
+    if (user != null){
+        userQuery = {pid: user.pid};
+        newTotalHours = parseFloat((user.totalHours + ((Date.now() - user.currSession) / 3600000)).toFixed(2));
+        userUpdate = {currSession: -1, totalHours: newTotalHours};
+        await mongo.update('userList', userQuery, userUpdate)
+    }
+    sendUpdate();
+}
+
+async function enablePC(pc){
+    pc = pc[0];
+    pcQuery = {name: pc.name};
+    pcUpdate = {currUser: null, status: "Available"};
+    await mongo.update('pcList', pcQuery, pcUpdate);
+    sendUpdate();
+}
+
+=======
 //update the PC's on the frontend
+
 async function sendUpdate(){
     pcList = await mongo.read("pcList")
     io.emit('pcStatusUpdate', {pcList: pcList});
@@ -216,6 +242,27 @@ io.on('connection', (socket) => {
             endSession(pcInfo);
         }
     });
+
+    socket.on('enable', async (data)=>{
+        if(mongoStarted){
+            const pcInfo = await getSinglePcInfo(data.pcName);
+            enablePC(pcInfo);
+        }
+    });
+
+    socket.on('disable', async (data)=>{
+        if(mongoStarted){
+            const pcInfo = await getSinglePcInfo(data.pcName);
+            disablePC(pcInfo);
+        }
+    });
+    
+    socket.on('getQueueSize', ()=>{
+        if(mongoStarted){
+            let size = await
+            socket.emit("updateQueue", {})
+        }
+    })
 
     socket.on('queueAccepted', async(data) => {
         if(mongoStarted){

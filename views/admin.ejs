@@ -57,16 +57,59 @@
             <div class="PC available pc-item" data-pc-name="E4">E4</div>
         </div>
     </div>
+    <label>Disable/Enable PCs</label>
+    <select name="ModifyPC" id="ModifyPC">
+        <option value="D1">D1</option>
+        <option value="D2">D2</option>
+        <option value="D3">D3</option>
+        <option value="D4">D4</option>
+        <option value="D5">D5</option>
+        <option value="D6">D6</option>
+        <option value="C1">C1</option>
+        <option value="C2">C2</option>
+        <option value="C3">C3</option>
+        <option value="C4">C4</option>
+        <option value="C5">C5</option>
+        <option value="C6">C6</option>
+        <option value="B1">B1</option>
+        <option value="B2">B2</option>
+        <option value="B3">B3</option>
+        <option value="B4">B4</option>
+        <option value="B5">B5</option>
+        <option value="A1">A1</option>
+        <option value="A2">A2</option>
+        <option value="A3">A3</option>
+        <option value="A4">A4</option>
+        <option value="A5">A5</option>
+        <option value="A6">A6</option>
+        <option value="E1">E1</option>
+        <option value="E2">E2</option>
+        <option value="E3">E3</option>
+        <option value="E4">E4</option>
+      </select>
+      <button class="disable">Disable</button>
+      <button class="enable">Enable</button>
 </div>
 <div class="Cafe">Cafe</div>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.1.3/socket.io.js"></script>
 <script>
+    
     const socket = io();
     socket.on('pcStatusUpdate', (data) => {
         for(let i = 0; i < data.pcList.length; i++){
             changeStatus(data.pcList[i].name, data.pcList[i].status)
         }
+    });
+    const disable = document.getElementsByClassName("disable")[0];
+    const enable = document.getElementsByClassName("enable")[0];
+    disable.addEventListener("click", ()=>{
+        const pcName = document.getElementById("ModifyPC").value;
+        socket.emit('disable', {pcName});
+    });
+    enable.addEventListener("click", ()=>{
+        const pcName = document.getElementById("ModifyPC").value;
+        socket.emit('enable', {pcName});
     });
 
     socket.on('queueUpdate', (data) =>{
@@ -130,7 +173,6 @@
         if (pcItem.classList.contains("Used")){
             const pcName = pcItem.dataset.pcName;
             socket.emit('signOff', { pcName });
-        }else{
         }
         });
     });
