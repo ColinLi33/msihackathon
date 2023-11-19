@@ -49,6 +49,7 @@ app.post('/auth', async function(req, res) {
 	let pid = req.body.pid;
 	if (name && pid) {
         user = await getSingleUserInfo(pid)
+        console.log(user)
         if(user.length == 0){
             user = {
                 name: name,
@@ -57,6 +58,8 @@ app.post('/auth', async function(req, res) {
                 totalHours: 0
             }
             await mongo.write('userList', user)
+        } else {
+            user = user[0]
         }
         availPC = await getAvailablePC();
         if(availPC != null){ //there is available pc
@@ -75,6 +78,7 @@ app.post('/auth', async function(req, res) {
 });
 
 async function assignUserToPc(user, pc){
+    user.currSession = Date.now()
     pcQuery = {name: pc}
     userQuery = {pid: user.pid}
     pcUpdate = {currUser: user, status: "Used"}
@@ -92,7 +96,7 @@ async function endSession(pc){
     pcUpdate = {currUser: null, status: "Available"}
     user = pc.currUser;
     userQuery = {pid: user.pid}
-    newTotalHours = (user.totalHours + Date.now() - (user.currSession / 3600000)).toFixed(2)
+    newTotalHours = parseFloat((user.totalHours + ((Date.now() - user.currSession) / 3600000)).toFixed(2))
     userUpdate = {currSession: -1, totalHours: newTotalHours}
     await mongo.update('pcList', pcQuery, pcUpdate)
     await mongo.update('userList', userQuery, userUpdate)
