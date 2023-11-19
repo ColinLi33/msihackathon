@@ -48,13 +48,13 @@
     display: flex;
     justify-content: space-between;
 }
-.available{
+.Available{
     background-color: lightgreen;
 }
-.used{
+.Used{
     background-color: lightcoral;
 }
-.broken{
+.OutOfOrder{
     background-color: yellow;
 }
 button{

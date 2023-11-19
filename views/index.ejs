@@ -71,11 +71,10 @@
     });
 
     const pcItems = document.querySelectorAll('.pc-item');
-    console.log(pcItems)
+
     pcItems.forEach((pcItem) => {
         pcItem.addEventListener('mouseenter', () => {
             const pcName = pcItem.dataset.pcName;
-            console.log(pcName)
             socket.emit('getPcInfo', { pcName });
             showTooltip(pcItem);
         });
@@ -101,7 +100,6 @@
 
     function updateTooltip(data) {
         data = data[0]
-        console.log(data)
         userData = "None"
         sessionLength = 0
         if(data.currUser != null){

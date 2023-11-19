@@ -27,14 +27,17 @@ app.get('/swipe', (req, res) => {
     res.render('swipe');
 });
 
+//test function that resets all PC to empty
 app.get('/test', async (req, res) => {
-    pcList = await mongo.read("pcList")
-    for(let i = 0; i < pcList.length; i++){
-        pcQuery = {name: pcList[i].name}
-        pcUpdate = {currUser: null, status: "available"}
-        await mongo.update('pcList', pcQuery, pcUpdate)
+    if(mongoStarted){
+        pcList = await mongo.read("pcList")
+        for(let i = 0; i < pcList.length; i++){
+            pcQuery = {name: pcList[i].name}
+            pcUpdate = {currUser: null, status: "Available"}
+            await mongo.update('pcList', pcQuery, pcUpdate)
+        }
+        sendUpdate();
     }
-    sendUpdate();
 });
 
 app.post('/auth', async function(req, res) {
@@ -63,7 +66,7 @@ app.post('/auth', async function(req, res) {
 async function assignUserToPc(user, pc){
     pcQuery = {name: pc}
     userQuery = {pid: user.pid}
-    pcUpdate = {currUser: user, status: "used"}
+    pcUpdate = {currUser: user, status: "Used"}
     userUpdate = {name: user.name, pid: user.pid, currSession: user.currSession}
 
     // script.changeStatus(pc, "used");
@@ -78,7 +81,7 @@ async function sendUpdate(){
 }
 
 function isAvailable(pc){
-    if(pc.currUser == null && pc.status == 'available'){
+    if(pc.currUser == null && pc.status == 'Available'){
         return true;
     }
     return false;

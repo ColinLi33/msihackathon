@@ -27,9 +27,9 @@ function changeStatus(pcName, newStatus){
     let PCs = document.getElementsByClassName("PC");
     for (let i = 0; i < PCs.length; i++){
         if(PCs[i].innerText === pcName){
-            PCs[i].classList.remove("used");
-            PCs[i].classList.remove("broken");
-            PCs[i].classList.remove("available");
+            PCs[i].classList.remove("Used");
+            PCs[i].classList.remove("OutOfOrder");
+            PCs[i].classList.remove("Available");
             PCs[i].classList.add(newStatus);        
         }
     }
