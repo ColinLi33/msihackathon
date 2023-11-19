@@ -37,6 +37,9 @@
     margin: 15px;
 }
 .body{
+    /* background: url('ucsdlogo.jpg');
+    background-repeat: no-repeat;
+    background-size: 1920px 1080px; */
     display: flex;
     flex-direction: column;
     justify-content: center;
