@@ -84,6 +84,7 @@ app.post('/auth', async function(req, res) {
         if(availPC != null){ //there is available pc
             await assignUserToPc(user, availPC)
             res.render('gotopc', {availPC});
+            updateQueue();
             return;
         } else {  //no available pc
             const qQuery = { pid: user.pid };
@@ -171,12 +172,16 @@ async function enablePC(pc){
     sendUpdate();
 }
 
-=======
 //update the PC's on the frontend
 
 async function sendUpdate(){
     pcList = await mongo.read("pcList")
     io.emit('pcStatusUpdate', {pcList: pcList});
+}
+
+async function updateQueue(){
+    size = await mongo.getSize("userQueue");
+    io.emit('updateQueue', {size: size});
 }
 
 //return true if pc is open
@@ -256,10 +261,9 @@ io.on('connection', (socket) => {
         }
     });
     
-    socket.on('getQueueSize', ()=>{
+    socket.on('getQueueSize', async (data)=>{
         if(mongoStarted){
-            let size = await
-            socket.emit("updateQueue", {})
+            await updateQueue();
         }
     })
 
@@ -270,6 +274,7 @@ io.on('connection', (socket) => {
             await assignUserToPc(data, freePc);
             const userQuery = { pid: data.pid };
             await mongo.delete('userQueue', userQuery);
+            await updateQueue();
         }
     });
 

@@ -80,6 +80,7 @@ class MongoDriver {
 
     async getSize(collectionName){
         const size = this.db.collection(collectionName).count();
+        //console.log(size);
         return size;
     }
 }
