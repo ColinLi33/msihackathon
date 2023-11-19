@@ -48,14 +48,22 @@ app.post('/auth', async function(req, res) {
 	let name = req.body.name;
 	let pid = req.body.pid;
 	if (name && pid) {
-        const newUser = new User(name, pid, Date.now())
+        user = await getSingleUserInfo(pid)
+        if(user.length == 0){
+            user = {
+                name: name,
+                pid: pid,
+                currSession: -1,
+                totalHours: 0
+            }
+            await mongo.write('userList', user)
+        }
         availPC = await getAvailablePC();
         if(availPC != null){ //there is available pc
-            await assignUserToPc(newUser, availPC)
+            await assignUserToPc(user, availPC)
             res.render('gotopc', {availPC});
-            
         } else {  //no available pc
-            pcQueue.enqueue(newUser);
+            pcQueue.enqueue(user);
             spotInLine = pcQueue.size();
             res.render('queue', {spotInLine})
         }
@@ -70,7 +78,7 @@ async function assignUserToPc(user, pc){
     pcQuery = {name: pc}
     userQuery = {pid: user.pid}
     pcUpdate = {currUser: user, status: "Used"}
-    userUpdate = {name: user.name, pid: user.pid, currSession: user.currSession}
+    userUpdate = {name: user.name, pid: user.pid, currSession: Date.now(), totalHours: user.totalHours}
 
     // script.changeStatus(pc, "used");
     await mongo.update('pcList', pcQuery, pcUpdate)
@@ -82,9 +90,7 @@ async function endSession(pc){
     pc = pc[0];
     pcQuery = {name: pc.name}
     pcUpdate = {currUser: null, status: "Available"}
-    // console.log(pcInfo);
     user = pc.currUser;
-    //console.log(pc);
     userQuery = {pid: user.pid}
     newTotalHours = (user.totalHours + Date.now() - (user.currSession / 3600000)).toFixed(2)
     userUpdate = {currSession: -1, totalHours: newTotalHours}
@@ -123,6 +129,12 @@ async function getSinglePcInfo(pcName) {
     return pcInfo;
 }
 
+async function getSingleUserInfo(pid) {
+    const userQuery = { pid: pid };
+    const userInfo = await mongo.read('userList', userQuery);
+    return userInfo;
+}
+
 
 http.listen(port, () => {
     startMongo();
@@ -146,7 +158,6 @@ io.on('connection', (socket) => {
 
     socket.on('signOff', async (data) => {
         if(mongoStarted){
-            //console.log("hey");
             const pcInfo = await getSinglePcInfo(data.pcName);
             endSession(pcInfo);
         }
@@ -157,3 +168,7 @@ async function startMongo(){
     await mongo.connect();
     mongoStarted = true;
 }
+
+
+
+

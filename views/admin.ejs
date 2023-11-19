@@ -5,6 +5,7 @@
     </head>
 <div class="body">
 <div class="Garage">Garage</div>
+<div id="pcTooltip" class="tooltip"></div>
 <div id="Seats">
     <div class="Row">
         <div class="Left">
@@ -70,32 +71,50 @@
     });
 
     const pcItems = document.querySelectorAll('.pc-item');
-    console.log(pcItems)
     pcItems.forEach((pcItem) => {
         pcItem.addEventListener('mouseenter', () => {
-        const pcName = pcItem.dataset.pcName;
-        console.log(pcName)
-        socket.emit('getPcInfo', { pcName });
+            const pcName = pcItem.dataset.pcName;
+            socket.emit('getPcInfo', { pcName });
+            showTooltip(pcItem);
+        });
+        pcItem.addEventListener('mouseleave', () => {
+            hideTooltip();
         });
     });
+    const pcTooltip = document.getElementById('pcTooltip');
+    socket.on('pcInfo', (data) => {
+        updateTooltip(data);
+    });
+
+    function showTooltip(pcItem) {
+        pcTooltip.style.display = 'block';
+        pcTooltip.style.left = pcItem.offsetLeft + 'px';
+        pcTooltip.style.top = pcItem.offsetTop + pcItem.offsetHeight + 'px';
+    }
+
+    function hideTooltip() {
+        pcTooltip.style.display = 'none';
+     }
+
+    function updateTooltip(data) {
+        data = data[0]
+        userData = "None"
+        sessionLength = 0
+        if(data.currUser != null){
+            userData = data.currUser.name
+            sessionLength = ((Date.now() - data.currUser.currSession) / 3600000).toFixed(2)
+        }
+        pcTooltip.innerHTML = `PC: ${data.name}<br>Status: ${data.status}<br>Current User: ${userData}<br>Session Length: ${sessionLength} hours`;
+    } 
+
     pcItems.forEach((pcItem) => {
         pcItem.addEventListener('click', () => {
         if (pcItem.classList.contains("Used")){
-            console.log("trying to sign off");
             const pcName = pcItem.dataset.pcName;
             socket.emit('signOff', { pcName });
         }else{
-            console.log("it's free");
         }
         });
-    });
-
-    socket.on('pcInfo', (data) => {
-        console.log(data)
-    });
-
-    socket.on('signedOff', (data) => {
-        //console.log(data);
     });
 
     
