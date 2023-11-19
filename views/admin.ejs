@@ -2,6 +2,8 @@
 <html>
     <head>
         <link href="style.css" rel="stylesheet" type="text/css">
+        <link rel="shortcut icon" href="ucsdlogo.jpg" />
+
     </head>
 <div class="body">
 <div class="Garage">Garage</div>
@@ -195,9 +197,10 @@
         option.text = "Current Sessions"
         currentSessionsDropdown.appendChild(option);
         data.sort(sortByProperty("time"));
+        console.log(data);
         for (let i = 0; i < data.length; i++) {
             const option = document.createElement('option');
-            option.text = `PC: ${data[i].pcName}: ${data[i].userData.name}, ${data[i].time} minutes`
+            option.text = `${data[i].name}: ${data[i].time} minutes`
             currentSessionsDropdown.appendChild(option);
         }
     });

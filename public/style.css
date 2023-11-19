@@ -68,6 +68,9 @@
 .OutOfOrder{
     background-color: gray;
 }
+.Reserved{
+    background-color: orangered;
+}
 .buttons{
     padding: 5px;
 }
@@ -202,6 +205,15 @@ button{
     position: absolute;
     /* top: 50%; */
     top: 5px;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    padding: 0px;
+  }
+
+  .centerSchedule {
+    position: absolute;
+    /* top: 50%; */
+    bottom: 25%;
     left: 50%;
     transform: translate(-50%, -50%);
     padding: 0px;

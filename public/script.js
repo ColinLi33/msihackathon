@@ -30,6 +30,7 @@ function changeStatus(pcName, newStatus){
             PCs[i].classList.remove("Used");
             PCs[i].classList.remove("OutOfOrder");
             PCs[i].classList.remove("Available");
+            PCs[i].classList.remove("Reserved");
             PCs[i].classList.add(newStatus);        
         }
     }

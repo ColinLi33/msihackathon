@@ -48,6 +48,20 @@ app.get('/login', (req, res) =>{
     }
 });
 
+//admin page
+app.get('/manager', (req, res) => {
+    res.render('managerLogin');
+});
+
+//manager
+app.get('/managerLogin', (req, res) =>{
+    if (req.query.username === "UCSDEsports" && req.query.password === "tec123"){
+        res.render('manager');
+    }else{
+        res.render('managerLogin');
+    }
+});
+
 //gotoPC
 app.get('/gotopc/:pcName', (req, res) => {
     const availPC = req.params.pcName;
@@ -96,10 +110,10 @@ app.post('/auth', async function(req, res) {
             return;
         }
         availPC = await getAvailablePC();
+        console.log("HELLO", availPC)
         if(availPC != null){ //there is available pc
             res.render('pcPick', {user: user, availPC: availPC})
             return
-        
             // return;
         } else {  //no available pc
             const qQuery = { pid: user.pid };
