@@ -35,6 +35,10 @@ app.get('/setup', (req, res) => {
     res.render('setup');
 });
 
+app.get('/pcPick', (req, res) => {
+    res.render('pcPick');
+});
+
 //admin login page
 app.get('/login', (req, res) =>{
     if (req.query.username === "UCSDEsports" && req.query.password === "tec123"){
@@ -42,6 +46,17 @@ app.get('/login', (req, res) =>{
     }else{
         res.render('adminLogin');
     }
+});
+
+//gotoPC
+app.get('/gotopc/:pcName', (req, res) => {
+    const availPC = req.params.pcName;
+    res.render('gotopc', {availPC})
+});
+
+app.get('/pcPicker/:pid', (req, res) => {
+    const pid = req.params.pid;
+    res.render('pcPicker', {pid})
 });
 
 
@@ -82,9 +97,10 @@ app.post('/auth', async function(req, res) {
         }
         availPC = await getAvailablePC();
         if(availPC != null){ //there is available pc
-            await assignUserToPc(user, availPC)
-            res.render('gotopc', {availPC});
-            return;
+            res.render('pcPick', {user: user, availPC: availPC})
+            return
+        
+            // return;
         } else {  //no available pc
             const qQuery = { pid: user.pid };
             const qInfo = await mongo.read('userQueue', qQuery);
@@ -293,6 +309,27 @@ io.on('connection', (socket) => {
             const userQuery = { pid: data };
             await mongo.delete('userQueue', userQuery);
             sendQueueUpdate()
+        }
+    });
+
+    socket.on('randomPC', async(data) => {
+        if(mongoStarted){
+            availPC = data.availPC
+            pcName = availPC.replace(/["']/g, "")
+            socket.emit('changePage', `/gotopc/${pcName}`);
+            await assignUserToPc(data.user, pcName)
+        }
+    });
+
+    socket.on('pickPC', async(data) => {
+        if(mongoStarted){
+            socket.emit('changePage', `/pcPicker/${data.userData.pid}`);
+        }
+    });
+    socket.on('assignPC', async(data) => {
+        if(mongoStarted){
+            assignUserToPc(data.userData, data.pcName)
+            socket.emit('changePage', `/gotopc/${data.pcName}`);
         }
     });
 });

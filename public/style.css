@@ -58,6 +58,9 @@
 .Available{
     background-color: lightgreen;
 }
+.darkGreen{
+    background-color: green;
+}
 .Used{
     background-color: lightcoral;
 }
@@ -181,3 +184,12 @@ button{
   .box select option {
     padding: 30px;
   } 
+
+.centeredHeader {
+    position: absolute;
+    /* top: 50%; */
+    top: 5px;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    padding: 0px;
+  }

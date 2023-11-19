@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="pcPick.css" rel="stylesheet" type="text/css">
+    <title>TEC Controller</title>
+</head>
+<body>
+    <div class = "centeredHeader">
+        <h1>Choose a PC</h1>
+    </div>
+    <div class = 'center'>
+        <button class="button-36" onclick="getRandomPC()" role="button">Random PC</button>
+        <button class="button-36" onclick="pickPC()" role="button">Pick your PC</button>
+    </div>
+    <div id="userData" data-points="<%= JSON.stringify(user) %>"></div>
+    <div id="pcData" data-points="<%= JSON.stringify(availPC) %>"></div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.1.3/socket.io.js"></script>
+    <script>
+        const socket = io();
+        let userData = document.getElementById('userData').getAttribute('data-points')
+        let pcData = document.getElementById('pcData').getAttribute('data-points')
+
+        function getRandomPC() {
+            socket.emit('randomPC', {availPC: pcData, user: JSON.parse(userData)});
+        }
+
+        function pickPC(){
+            socket.emit('pickPC', {userData: JSON.parse(userData)})
+        }
+
+        socket.on('changePage', (data)=>{
+            window.location.href = data;
+        });
+
+    </script>
+</body>
+</html>
