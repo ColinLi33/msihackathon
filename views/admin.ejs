@@ -82,6 +82,7 @@
                 socket.emit('queueAccepted', {nextInLine})
             } else {
                 counter++;
+                socket.emit('queueDeclined', {nextInLine})
             }
         }
 

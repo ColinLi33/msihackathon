@@ -90,6 +90,7 @@ app.post('/auth', async function(req, res) {
             const qInfo = await mongo.read('userQueue', qQuery);
             if(qInfo.length == 0){ //add user to queue
                 user['index'] = await mongo.getSize('userQueue') + 1
+                user.currSession = Date.now();
                 await mongo.write('userQueue', user)
                 spotInLine = user.index
                 res.render('queue', {spotInLine})
@@ -223,6 +224,18 @@ io.on('connection', (socket) => {
             await assignUserToPc(data, freePc);
             const userQuery = { pid: data.pid };
             await mongo.delete('userQueue', userQuery);
+        }
+    });
+
+    socket.on('queueDeclined', async(data) => {
+        if(mongoStarted){
+            let minQueueBeforeKick = 45
+            data = data.nextInLine
+            const userQuery = { pid: data.pid };
+            queueData = await mongo.read('userQueue', userQuery);
+            if((Date.now() - queueData[0].currSession) / 60000 > minQueueBeforeKick){ //remove from queue if in for 45 min and decline
+                await mongo.delete('userQueue', userQuery);
+            }
         }
     });
 });
