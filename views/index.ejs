@@ -59,24 +59,25 @@
     </div>
 </div>
 <div class="buttons">
-    <div class="schedule"><button>Esports Hours Schedule</button></div>
-    <div class="add"><a href="swipe"><button id="swipe">Swipe Student ID to get a spot!</button></a></div>
+    <div class="schedule"><button>Open Rec Hours</button></div>
+    <div class="add"><button id="swipe">Swipe Student ID to get a spot!</button></div>
 </div>
 <p class="QueueSize">Current queue size: </p>
-<dialog id="myDialog"><p>Esport Hours: </p>
+<dialog id="myDialog"><p>Open Rec Hours: </p>
 
-    <p>Monday: 4pm to 10pm</p>
+    <p>Monday: 7:30am to 4:30pm</p>
     
-    <p>Wednesday: 4pm to 10pm</p>
+    <p>Tuesday: 7:30am to 4:30pm</p>
+
+    <p>Wednesday: 7:30am to 4:30pm</p>
+
+    <p>Thursday: 7:30am to 4:30pm</p>
     
-    <p>Friday: 4pm to 10pm</p>
+    <p>Friday: 7:30am to 3pm</p>
     
-    <p>Saturday: 10:30am to 6pm</p>
+    <p>Saturday: 10am to 7pm</p>
     
-    <p>Sunday: 12pm to 7pm</p>
-    
-    <p>During esport hours, the tec are reserved for esport practices and matches only. 
-    Anyone not related to the team or not using the facility for esports reason need to use tec outside of esport hours.</p>
+    <p>Sunday: 10am to 7pm</p>
     
     <button id="closeModal">Got it!</button>
 </dialog>
@@ -104,7 +105,31 @@
     closeButton.addEventListener("click", ()=>{
         dialog.close();
     })
-    const swipe = document.getElement
+    const swipe = document.getElementById('swipe');
+    swipe.addEventListener("click", ()=>{
+        let today = new Date();
+        if ((today.getDay() == 0 || today.getDay() == 6) && (today.getHours() < 10 || today.getHours() >= 19)){
+            alert("It is currently not open rec hours. Please come back in another time!");
+            return;
+        }else if (today.getDay() <= 4 && today.getDay > 0){
+            if(today.getHours() < 7 || today.getHours() > 16){
+                alert("It is currently not open rec hours. Please come back in another time!");
+                return;
+            }else if((today.getHours == 7 && today.getMinutes() < 30) || (today.getHours == 16 && today.getMinutes() >= 30)){
+                alert("It is currently not open rec hours. Please come back in another time!");
+                return;
+            }
+        }else if (today.getDay() == 5){
+            if(today.getHours() < 7 || today.getHours() >= 15){
+                alert("It is currently not open rec hours. Please come back in another time!");
+                return;
+            }else if (today.getHours() == 7 && today.getMinutes() < 30){
+                alert("It is currently not open rec hours. Please come back in another time!");
+                return;
+            }
+        }
+        window.location.href="swipe";
+    });
     
   </script>
 <script type="text/javascript" src="script.js"> </script>
