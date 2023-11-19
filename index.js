@@ -42,9 +42,7 @@ app.get('/test', async (req, res) => {
     if(mongoStarted){
         pcList = await mongo.read("pcList")
         for(let i = 0; i < pcList.length; i++){
-            pcQuery = {name: pcList[i].name}
-            pcUpdate = {currUser: null, status: "Available"}
-            await mongo.update('pcList', pcQuery, pcUpdate)
+            endSession(pcList[i]);
         }
         sendUpdate();
     }
@@ -55,10 +53,6 @@ app.post('/auth', async function(req, res) {
 	let pid = req.body.pid;
 	if (name && pid) {
         user = await getSingleUserInfo(pid)
-        if(user.length !=0 && user.currSession!=-1){
-            res.send('You already have a PC');
-            res.end();
-        }
         if(user.length == 0){
             user = {
                 name: name,
@@ -68,10 +62,19 @@ app.post('/auth', async function(req, res) {
             }
             await mongo.write('userList', user)
         }
+        if(user.length == 1){
+            user = user[0]
+        }
+        //comment this for testingif wnat to fill up pcs
+        if(user.currSession != -1){
+            res.render('alreadyHavePC');
+            return;
+        }
         availPC = await getAvailablePC();
         if(availPC != null){ //there is available pc
             await assignUserToPc(user, availPC)
             res.render('gotopc', {availPC});
+            return;
         } else {  //no available pc
             const qQuery = { pid: user.pid };
             const qInfo = await mongo.read('userQueue', qQuery);
@@ -80,9 +83,11 @@ app.post('/auth', async function(req, res) {
                 await mongo.write('userQueue', user)
                 spotInLine = user.index
                 res.render('queue', {spotInLine})
+                return;
             } else { //user already in queue
                 spotInLine = qInfo[0].index
                 res.render('alreadyQueued', {spotInLine})
+                return;
             }
         }
         
@@ -104,6 +109,7 @@ async function assignUserToPc(user, pc){
 
 }
 
+//TODO ask chris what to do if someone declines queue
 async function checkQueue(){
     queueInfo = await mongo.read('userQueue')
     if(queueInfo.length > 0){
@@ -112,17 +118,21 @@ async function checkQueue(){
 }
 
 async function endSession(pc){
-    pc = pc[0];
-    pcQuery = {name: pc.name}
-    pcUpdate = {currUser: null, status: "Available"}
-    user = pc.currUser;
-    userQuery = {pid: user.pid}
-    newTotalHours = parseFloat((user.totalHours + ((Date.now() - user.currSession) / 3600000)).toFixed(2))
-    userUpdate = {currSession: -1, totalHours: newTotalHours}
-    await mongo.update('pcList', pcQuery, pcUpdate)
-    await mongo.update('userList', userQuery, userUpdate)
-    sendUpdate();
-    checkQueue();
+    if(pc.length == 1){
+        pc = pc[0];
+    }
+    if(pc.currUser != null){
+        user = pc.currUser;
+        pcQuery = {name: pc.name}
+        pcUpdate = {currUser: null, status: "Available"}
+        userQuery = {pid: user.pid}
+        newTotalHours = parseFloat((user.totalHours + ((Date.now() - user.currSession) / 3600000)).toFixed(2))
+        userUpdate = {currSession: -1, totalHours: newTotalHours}
+        await mongo.update('pcList', pcQuery, pcUpdate)
+        await mongo.update('userList', userQuery, userUpdate)
+        sendUpdate();
+        checkQueue();
+    }
 }
 
 async function sendUpdate(){
