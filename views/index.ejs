@@ -60,5 +60,14 @@
 <div class="add"><button>Add a ticket</button></div>
 <div class="Cafe">Cafe</div>
 </div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.1.3/socket.io.js"></script>
+<script>
+    const socket = io();
+    socket.on('pcStatusUpdate', (data) => {
+        for(let i = 0; i < data.pcList.length; i++){
+            changeStatus(data.pcList[i].name, data.pcList[i].status)
+        }
+    });
+  </script>
 <script type="text/javascript" src="script.js"> </script>
 </html>
