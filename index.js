@@ -83,8 +83,6 @@ async function assignUserToPc(user, pc){
     userQuery = {pid: user.pid}
     pcUpdate = {currUser: user, status: "Used"}
     userUpdate = {name: user.name, pid: user.pid, currSession: Date.now(), totalHours: user.totalHours}
-
-    // script.changeStatus(pc, "used");
     await mongo.update('pcList', pcQuery, pcUpdate)
     await mongo.update('userList', userQuery, userUpdate)
     sendUpdate();
