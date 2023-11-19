@@ -35,7 +35,7 @@
     z-index: 1;
 }
 *{
-    margin: 15px;
+    margin: 10px;
 }
 .body{
     /* background: url('ucsdlogo.jpg');
@@ -67,6 +67,17 @@
 }
 .OutOfOrder{
     background-color: gray;
+}
+.buttons{
+    padding: 5px;
+}
+#myDialog{
+  max-width: 450px;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  margin: 5px;
 }
 button{
     display: inline-block;
