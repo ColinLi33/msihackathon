@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <link href="style.css" rel="stylesheet" type="text/css">
+    </head>
+<div class="body">
+<div class="Garage">Garage</div>
+<div id="pcTooltip" class="tooltip"></div>
+<div id="Seats">
+    <div class="Row">
+        <div class="Left">
+            <div class="PC available pc-item" data-pc-name="D1">D1</div>
+            <div class="PC available pc-item" data-pc-name="D2">D2</div>
+            <div class="PC available pc-item" data-pc-name="D3">D3</div>
+            <div class="PC available pc-item" data-pc-name="D4">D4</div>
+            <div class="PC available pc-item" data-pc-name="D5">D5</div>
+            <div class="PC available pc-item" data-pc-name="D6">D6</div>
+        </div>
+        <div class="right">
+            <div class="PC available pc-item" data-pc-name="E1">E1</div>
+        </div>
+    </div>
+    <div class="Row">
+        <div class="Left">
+            <div class="PC available pc-item" data-pc-name="C1">C1</div>
+            <div class="PC available pc-item" data-pc-name="C2">C2</div>
+            <div class="PC available pc-item" data-pc-name="C3">C3</div>
+            <div class="PC available pc-item" data-pc-name="C4">C4</div>
+            <div class="PC available pc-item" data-pc-name="C5">C5</div>
+            <div class="PC available pc-item" data-pc-name="C6">C6</div>
+        </div>
+        <div class="right">
+            <div class="PC available pc-item" data-pc-name="E2">E2</div>
+        </div>
+    </div>
+    <div class="Row">
+        <div class="Left">
+            <div class="PC available pc-item" data-pc-name="B1">B1</div>
+            <div class="PC available pc-item" data-pc-name="B2">B2</div>
+            <div class="PC available pc-item" data-pc-name="B3">B3</div>
+            <div class="PC available pc-item" data-pc-name="B4">B4</div>
+            <div class="PC available pc-item" data-pc-name="B5">B5</div>
+        </div>
+        <div class="right">
+            <div class="PC available pc-item" data-pc-name="E3">E3</div>
+        </div>
+    </div>
+    <div class="Row">
+        <div class="Left">
+            <div class="PC available pc-item" data-pc-name="A1">A1</div>
+            <div class="PC available pc-item" data-pc-name="A2">A2</div>
+            <div class="PC available pc-item" data-pc-name="A3">A3</div>
+            <div class="PC available pc-item" data-pc-name="A4">A4</div>
+            <div class="PC available pc-item" data-pc-name="A5">A5</div>
+        </div>
+        <div class="right">
+            <div class="PC available pc-item" data-pc-name="E4">E4</div>
+        </div>
+    </div>
+</div>
+<div class="add"><button>Add a ticket</button></div>
+<div class="Cafe">Cafe</div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.1.3/socket.io.js"></script>
+<script>
+    const socket = io();
+    socket.on('pcStatusUpdate', (data) => {
+        for(let i = 0; i < data.pcList.length; i++){
+            changeStatus(data.pcList[i].name, data.pcList[i].status)
+        }
+    });
+
+    const pcItems = document.querySelectorAll('.pc-item');
+    pcItems.forEach((pcItem) => {
+        pcItem.addEventListener('mouseenter', () => {
+            const pcName = pcItem.dataset.pcName;
+            socket.emit('getPcInfo', { pcName });
+            showTooltip(pcItem);
+        });
+        pcItem.addEventListener('mouseleave', () => {
+            hideTooltip();
+        });
+    });
+    const pcTooltip = document.getElementById('pcTooltip');
+    socket.on('pcInfo', (data) => {
+        updateTooltip(data);
+    });
+
+    function showTooltip(pcItem) {
+        pcTooltip.style.display = 'block';
+        pcTooltip.style.left = pcItem.offsetLeft + 'px';
+        pcTooltip.style.top = pcItem.offsetTop + pcItem.offsetHeight + 'px';
+    }
+
+    function hideTooltip() {
+        pcTooltip.style.display = 'none';
+     }
+
+    function updateTooltip(data) {
+        data = data[0]
+        userData = "None"
+        sessionLength = 0
+        if(data.currUser != null){
+            userData = data.currUser.name
+            sessionLength = ((Date.now() - data.currUser.currSession) / 3600000).toFixed(2)
+        }
+        pcTooltip.innerHTML = `PC: ${data.name}<br>Status: ${data.status}<br>Current User: ${userData}<br>Session Length: ${sessionLength} hours`;
+    } 
+
+    pcItems.forEach((pcItem) => {
+        pcItem.addEventListener('click', () => {
+        if (pcItem.classList.contains("Used")){
+            const pcName = pcItem.dataset.pcName;
+            socket.emit('signOff', { pcName });
+        }else{
+        }
+        });
+    });
+
+    
+  </script>
+<script type="text/javascript" src="script.js"> </script>
+</html>

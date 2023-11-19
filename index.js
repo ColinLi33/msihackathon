@@ -1,47 +1,69 @@
 const express = require('express');
-const PC = require('./pc');
 const User = require('./user')
 const fs = require("fs");
 const { parse } = require("csv-parse");
 const Queue = require("./pcQ")
-
-
+const MongoDriver = require('./mongoDriver');
 const app = express();
+const http = require('http').createServer(app);
+const io = require('socket.io')(http);
+
+
+
 app.set('view engine', 'ejs');
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static('public'));
 
+
 const port = 3000;
-
-let pcList = []
 const pcQueue = new Queue();
-
+const mongo = new MongoDriver("mongodb+srv://testUser:123@cluster0.vumv6ea.mongodb.net/?retryWrites=true&w=majority");
+let mongoStarted = false
 app.get('/', (req, res) => {
-  res.send('Welcome to my server!');
+  res.render('index');
 });
-
 app.get('/swipe', (req, res) => {
     res.render('swipe');
 });
 
-app.post('/auth', function(req, res) {
-	// Capture the input fields
+app.get('/admin', (req, res) => {
+    res.render('admin');
+});
+
+//test function that resets all PC to empty
+app.get('/test', async (req, res) => {
+    if(mongoStarted){
+        pcList = await mongo.read("pcList")
+        for(let i = 0; i < pcList.length; i++){
+            pcQuery = {name: pcList[i].name}
+            pcUpdate = {currUser: null, status: "Available"}
+            await mongo.update('pcList', pcQuery, pcUpdate)
+        }
+        sendUpdate();
+    }
+});
+
+app.post('/auth', async function(req, res) {
 	let name = req.body.name;
 	let pid = req.body.pid;
-    console.log(name,pid)
-	// Ensure the input fields exists and are not empty
 	if (name && pid) {
-        const newUser = new User(name,pid, Date.now())
-        availPC = getAvailablePC();
-        console.log(availPC)
+        user = await getSingleUserInfo(pid)
+        if(user.length == 0){
+            user = {
+                name: name,
+                pid: pid,
+                currSession: -1,
+                totalHours: 0
+            }
+            await mongo.write('userList', user)
+        }
+        availPC = await getAvailablePC();
         if(availPC != null){ //there is available pc
-            assignUserToPc(newUser, availPC)
-            let pcName = availPC.getName();
-            res.render('gotopc', {pcName});
-            
+            await assignUserToPc(user, availPC)
+            res.render('gotopc', {availPC});
         } else {  //no available pc
-            pcQueue.enqueue(newUser);
+            pcQueue.enqueue(user);
             spotInLine = pcQueue.size();
             res.render('queue', {spotInLine})
         }
@@ -52,57 +74,97 @@ app.post('/auth', function(req, res) {
 	}
 });
 
-function assignUserToPc(user, pc){
-    pc.setUser(user);
-    user.startSession();
+async function assignUserToPc(user, pc){
+    pcQuery = {name: pc}
+    userQuery = {pid: user.pid}
+    pcUpdate = {currUser: user, status: "Used"}
+    userUpdate = {name: user.name, pid: user.pid, currSession: Date.now(), totalHours: user.totalHours}
+
+    // script.changeStatus(pc, "used");
+    await mongo.update('pcList', pcQuery, pcUpdate)
+    await mongo.update('userList', userQuery, userUpdate)
+    sendUpdate();
 }
 
+async function endSession(pc){
+    pc = pc[0];
+    pcQuery = {name: pc.name}
+    pcUpdate = {currUser: null, status: "Available"}
+    user = pc.currUser;
+    userQuery = {pid: user.pid}
+    newTotalHours = (user.totalHours + Date.now() - (user.currSession / 3600000)).toFixed(2)
+    userUpdate = {currSession: -1, totalHours: newTotalHours}
+    await mongo.update('pcList', pcQuery, pcUpdate)
+    await mongo.update('userList', userQuery, userUpdate)
+    sendUpdate();
+}
+
+async function sendUpdate(){
+    pcList = await mongo.read("pcList")
+    io.emit('pcStatusUpdate', {pcList: pcList});
+}
+
+function isAvailable(pc){
+    if(pc.currUser == null && pc.status == 'Available'){
+        return true;
+    }
+    return false;
+}
 
 //return available pc or null if no pc available
-function getAvailablePC(){
+async function getAvailablePC(){
+    //check mongo
+    pcList = await mongo.read("pcList")
     for(let i = 0; i < pcList.length; i++){
-        if(pcList[i].isAvailable()){
-            return pcList[i];
+        if(isAvailable(pcList[i])){
+            return pcList[i].name;
         }
     }
     return null;
 }
 
-function getLongestSession(){
-    maxTime = -1;
-    longest = null;
-    currTime = Date.now();
-    for(let i = 0; i < pcList.length; i++){
-        timeDiff = currTime - pcList[i].currUser.currSession;
-        if(timeDiff >= maxTime){
-            maxTime = timeDiff;
-            longest = pcList[i];
-        }
-    }
-    return longest;
+async function getSinglePcInfo(pcName) {
+    const pcQuery = { name: pcName };
+    const pcInfo = await mongo.read('pcList', pcQuery);
+    return pcInfo;
+}
+
+async function getSingleUserInfo(pid) {
+    const userQuery = { pid: pid };
+    const userInfo = await mongo.read('userList', userQuery);
+    return userInfo;
 }
 
 
-function readPCs(){
-    fs.createReadStream("./pcData.csv")
-    .pipe(parse({ delimiter: ",", from_line: 2 }))
-    .on("data", function (row) {
-        currUser = null;
-        if(row[1] != 'null'){
-            currUser = row[1]
-        }
-        const newPC = new PC(row[0], currUser, row[2])
-        pcList.push(newPC)
-    })
-    .on("end", function () {
-      //  console.log("finished");
-    })
-    .on("error", function (error) {
-        console.log(error.message);
-    });
-}
-
-app.listen(port, () => {
-    readPCs()
+http.listen(port, () => {
+    startMongo();
     console.log(`Server is running on port ${port}`);
 }); 
+
+io.on('connection', (socket) => {
+    if(mongoStarted){
+        sendUpdate();
+    }
+    socket.on('disconnect', () => {
+    });
+
+    socket.on('getPcInfo', async (data) => {
+        if(mongoStarted){
+            const pcName = data.pcName;
+            const pcInfo = await getSinglePcInfo(pcName);
+            socket.emit('pcInfo', pcInfo);
+        }
+    });
+
+    socket.on('signOff', async (data) => {
+        if(mongoStarted){
+            const pcInfo = await getSinglePcInfo(data.pcName);
+            endSession(pcInfo);
+        }
+    });
+});
+
+async function startMongo(){
+    await mongo.connect();
+    mongoStarted = true;
+}

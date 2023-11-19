@@ -1,11 +1,11 @@
 class User{
     name = ''
-    id = ''
+    pid = ''
     currSession = -1 //start time in epoch
 
-    constructor(name = '', id = '', currSession = -1){
+    constructor(name = '', pid = '', currSession = -1){
         this.name = name;
-        this.id = id;
+        this.pid = pid;
         this.currSession = currSession;
     }
 
