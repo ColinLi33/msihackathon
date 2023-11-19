@@ -58,7 +58,7 @@ class MongoDriver {
         const options = { upsert: true };
         try {
             const result = await collection.findOneAndUpdate(query, { $set: update }, options);
-            console.log('Document updated:', result);
+            console.log('Document updated');
             return result;
         } catch (error) {
             console.error('Error updating in MongoDB:', error);
