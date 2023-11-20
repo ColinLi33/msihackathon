@@ -85,7 +85,6 @@
     const pcItems = document.querySelectorAll('.pc-item');
     pcItems.forEach((pcItem) => {
         pcItem.addEventListener('click', () => {
-            console.log(pcItem.classList)
             if(pcItem.classList.contains("Reserved")){
                 const pcName = pcItem.dataset.pcName;
                 changeStatus(pcName, "Available")
@@ -109,8 +108,14 @@
     });
 
     function submitReservation(){
-        timeStamp = document.getElementById('reservationTime').value
-        console.log(timeStamp)
+        reservedPCList = []
+        timestamp = document.getElementById('reservationTime').value
+        pcItems.forEach((pcItem) => {
+            if(pcItem.classList.contains("Reserved")){
+                reservedPCList.push(pcItem.dataset.pcName)
+            }
+        });
+        socket.emit("reservedPC", {timestamp: timestamp, pcList: reservedPCList})
     }
   </script>
 <script type="text/javascript" src="script.js"> </script>
