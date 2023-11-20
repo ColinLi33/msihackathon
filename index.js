@@ -379,6 +379,25 @@ io.on('connection', (socket) => {
             await mongo.write('reservations', reservation);
         }
     })
+
+    socket.on('checkReservationTime', async(data) =>{
+        if(mongoStarted){
+            timestamp = data.timestamp
+            allReservations = await mongo.read('reservations');
+            let threeHours = 10800000
+            takenPCList = []
+            for(let i = 0; i < allReservations.length; i++){
+                if(Math.abs(allReservations[i].timestamp - timestamp) <= threeHours){
+                    for(let j = 0; j < allReservations[i].pcList.length; j++){
+                        takenPCList.push(allReservations[i].pcList[j])
+                    }
+                }
+            }
+            if(takenPCList.length > 0 ){
+                socket.emit('takenPCs', {takenPCList: takenPCList})
+            }
+        }
+    })
 });
 
 //connect to mongo
