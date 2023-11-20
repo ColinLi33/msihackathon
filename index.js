@@ -367,6 +367,18 @@ io.on('connection', (socket) => {
             socket.emit('currentSessions', {result});
         }
     })
+
+    socket.on('reservedPC', async(data) =>{
+        if(mongoStarted){
+            timestamp = data.timestamp
+            pcList = data.pcList;
+            reservation = {
+                timestamp: timestamp,
+                pcList: pcList
+            }
+            await mongo.write('reservations', reservation);
+        }
+    })
 });
 
 //connect to mongo
