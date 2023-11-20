@@ -200,7 +200,7 @@
         console.log(data);
         for (let i = 0; i < data.length; i++) {
             const option = document.createElement('option');
-            option.text = `${data[i].name}: ${data[i].time} minutes`
+            option.text = `PC: ${data[i].pcName}, ${data[i].userData.name}: ${data[i].time} minutes`
             currentSessionsDropdown.appendChild(option);
         }
     });
