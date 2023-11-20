@@ -230,6 +230,23 @@ async function sendSessionUpdate(){
     return result;
 }
 
+async function checkIfReserved(){
+    let reservedList = await mongo.read("reservations");
+    let now = new Date();
+    for(let i = 0; i < reservedList.length; i++){
+        if (reservedList[i].timestamp - now <= 3600000){
+            for (let j = 0; j < reservedList[i].pcList.length; j++){
+                pcQuery = {name: reservedList[i].pcList[j]};
+                pcUpdate = {status: "Reserved"};
+                await mongo.update('pcList', pcQuery, pcUpdate);
+                sendUpdate();
+            }
+        }
+    }
+}
+setInterval(checkIfReserved, 90000);
+
+
 //return true if pc is open
 function isAvailable(pc){
     if(pc.currUser == null && pc.status == 'Available'){
@@ -237,6 +254,7 @@ function isAvailable(pc){
     }
     return false;
 }
+
 
 //return available pc or null if no pc available
 async function getAvailablePC(){
